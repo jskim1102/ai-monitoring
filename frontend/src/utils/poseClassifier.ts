@@ -28,7 +28,16 @@ export function classifyPose(kpts: [number, number, number][]): PoseClass {
   const dy = hip.y - shoulder.y;
   const torsoAngle = Math.atan2(Math.abs(dy), Math.abs(dx));
 
-  if (torsoAngle < Math.PI / 4) return "lying";
+  if (torsoAngle < Math.PI / 6) {
+    const visible = kpts.filter(([, , c]) => c >= 0.3);
+    if (visible.length >= 4) {
+      const ys = visible.map(([, y]) => y);
+      const xs = visible.map(([x]) => x);
+      const yRange = Math.max(...ys) - Math.min(...ys);
+      const xRange = Math.max(...xs) - Math.min(...xs);
+      if (xRange > 0 && yRange / xRange < 0.8) return "lying";
+    }
+  }
 
   const lk = pt(13), rk = pt(14);
   const knee = lk && rk ? { x: (lk.x + rk.x) / 2, y: (lk.y + rk.y) / 2 }

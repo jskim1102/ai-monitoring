@@ -22,6 +22,7 @@ export function useWebSocket(path: string | null): WsState {
   const [detections, setDetections] = useState<Detection[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const prevBlobRef = useRef("");
+  const pendingUrlRef = useRef("");
 
   const cleanup = useCallback(() => {
     if (wsRef.current) {
@@ -60,11 +61,16 @@ export function useWebSocket(path: string | null): WsState {
           const url = URL.createObjectURL(blob);
           if (prevBlobRef.current) URL.revokeObjectURL(prevBlobRef.current);
           prevBlobRef.current = url;
+          pendingUrlRef.current = url;
           setImgSrc(url);
         } else {
           try {
             const msg = JSON.parse(ev.data);
             if (msg.type === "detections") {
+              if (pendingUrlRef.current) {
+                setImgSrc(pendingUrlRef.current);
+                pendingUrlRef.current = "";
+              }
               setDetections(msg.items ?? []);
             }
           } catch { /* ignore parse errors */ }
