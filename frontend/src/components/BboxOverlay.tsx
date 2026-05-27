@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { resolveClassColor } from "../utils/colors";
 import type { ModelSettings } from "./ModelSettingsModal";
+import { classifyPose, POSE_COLORS } from "../utils/poseClassifier";
 
 /**
  * `<img>` 위에 절대 위치 `<canvas>` 로 bbox 오버레이.
@@ -35,13 +36,6 @@ const COCO_SKELETON: [number, number][] = [
   [5, 6], [5, 7], [7, 9], [6, 8], [8, 10],
   [5, 11], [6, 12], [11, 12],
   [11, 13], [13, 15], [12, 14], [14, 16],
-];
-
-const KPT_COLORS = [
-  "#ff0000", "#ff5500", "#ffaa00", "#ffff00", "#aaff00",
-  "#55ff00", "#00ff00", "#00ff55", "#00ffaa", "#00ffff",
-  "#00aaff", "#0055ff", "#0000ff", "#5500ff", "#aa00ff",
-  "#ff00ff", "#ff00aa",
 ];
 
 function BboxOverlay({ imgSrc, alt, detections, settings, imgStyle }: Props) {
@@ -98,25 +92,27 @@ function BboxOverlay({ imgSrc, alt, detections, settings, imgStyle }: Props) {
 
     for (const det of visible) {
       const [x1, y1, x2, y2] = det.xyxy;
-      // 색상 — per-model override 가 있으면 그것, 없으면 기본 팔레트
-      const colorOverride = settings?.[det.model]?.colors;
-      const color = resolveClassColor(det.class_id, colorOverride);
+      const hasPose = det.keypoints && det.keypoints.length >= 17;
+      const pose = hasPose ? classifyPose(det.keypoints!) : null;
 
-      // 사각형
+      const colorOverride = settings?.[det.model]?.colors;
+      const color = pose ? POSE_COLORS[pose] : resolveClassColor(det.class_id, colorOverride);
+
       ctx.lineWidth = lineWidth;
       ctx.strokeStyle = color;
       ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
 
-      // 라벨 텍스트
       const short =
         showModelPrefix && det.model
           ? det.model.endsWith(".pt")
             ? det.model.slice(0, -3)
             : det.model
           : "";
-      const label = short
-        ? `[${short}] ${det.name} ${det.conf.toFixed(2)}`
-        : `${det.name} ${det.conf.toFixed(2)}`;
+      const label = pose
+        ? `${pose.toUpperCase()} ${det.conf.toFixed(2)}`
+        : short
+          ? `[${short}] ${det.name} ${det.conf.toFixed(2)}`
+          : `${det.name} ${det.conf.toFixed(2)}`;
 
       const padX = 4 * scale;
       const padY = 2 * scale;
@@ -124,35 +120,33 @@ function BboxOverlay({ imgSrc, alt, detections, settings, imgStyle }: Props) {
       const labelH = fontPx + padY * 2;
       const labelY = Math.max(0, y1 - labelH);
 
-      // 라벨 배경
       ctx.fillStyle = color;
       ctx.fillRect(x1, labelY, textW + padX * 2, labelH);
 
-      // 라벨 글자 (흰색)
       ctx.fillStyle = "#ffffff";
       ctx.fillText(label, x1 + padX, labelY + padY);
 
-      // skeleton overlay
       const kpts = det.keypoints;
       if (kpts && kpts.length >= 17) {
         const kptR = Math.max(2, 3 * scale);
-        // limb lines
+        const skelColor = pose ? POSE_COLORS[pose] : "#00ffff";
+
         ctx.lineWidth = Math.max(1, 1.5 * scale);
+        ctx.strokeStyle = skelColor;
         for (const [a, b] of COCO_SKELETON) {
           const [ax, ay, ac] = kpts[a];
           const [bx, by, bc] = kpts[b];
           if (ac < 0.3 || bc < 0.3) continue;
-          ctx.strokeStyle = KPT_COLORS[a] ?? "#00ffff";
           ctx.beginPath();
           ctx.moveTo(ax, ay);
           ctx.lineTo(bx, by);
           ctx.stroke();
         }
-        // keypoint dots
+
+        ctx.fillStyle = skelColor;
         for (let k = 0; k < kpts.length; k++) {
           const [kx, ky, kc] = kpts[k];
           if (kc < 0.3) continue;
-          ctx.fillStyle = KPT_COLORS[k] ?? "#00ffff";
           ctx.beginPath();
           ctx.arc(kx, ky, kptR, 0, Math.PI * 2);
           ctx.fill();

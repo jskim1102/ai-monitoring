@@ -2,6 +2,7 @@ import React from "react";
 import BboxOverlay from "./BboxOverlay";
 import type { Detection } from "./BboxOverlay";
 import type { ModelSettings } from "./ModelSettingsModal";
+import { classifyPose } from "../utils/poseClassifier";
 
 interface Props {
   imgSrc: string;
@@ -66,7 +67,8 @@ function cornerStyle(pos: "tl" | "tr" | "bl" | "br"): React.CSSProperties {
 }
 
 export default function StreamViewer({ imgSrc, detections, connected, cameraName, streamKey, settings }: Props) {
-  const hasAlert = detections.some((d) => d.conf > 0.8);
+  const hasFall = detections.some((d) => d.keypoints && classifyPose(d.keypoints) === "lying");
+  const hasAlert = hasFall || detections.some((d) => !d.keypoints && d.conf > 0.8);
 
   return (
     <div style={{ ...S.stream, ...(hasAlert ? S.streamCrit : {}) }}>
@@ -110,9 +112,9 @@ export default function StreamViewer({ imgSrc, detections, connected, cameraName
       </div>
 
       <div style={{ ...S.hud, bottom: 14, right: 14, flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-        {hasAlert && (
+        {hasFall && (
           <span style={{ ...S.chip, color: "var(--crit)", borderColor: "rgba(248,113,113,0.45)" }}>
-            ALERT
+            FALL DETECTED
           </span>
         )}
       </div>

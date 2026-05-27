@@ -97,7 +97,7 @@ export default function MonitorPage() {
     if (hasFall && Date.now() - lastFallRef.current > 5000) {
       lastFallRef.current = Date.now();
       const id = ++eventIdRef.current;
-      setEvents((prev) => [{ id, type: "fall", timestamp: Date.now(), cameraName: activeCam?.name ?? "" }, ...prev].slice(0, 50));
+      setEvents((prev) => [{ id, type: "fall" as const, timestamp: Date.now(), cameraName: activeCam?.name ?? "" }, ...prev].slice(0, 50));
     }
   }, [detections, activeCam]);
 
