@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+*.db
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Env
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Models
+backend/models/*.pt
+backend/models/*.onnx
