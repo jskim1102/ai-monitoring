@@ -1,0 +1,131 @@
+/* Tunnel Monitor Design System
+   "instrument-grade" dark UI — single cyan accent + neutral grays */
+
+/* ── External Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@200;300;400;500;600&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+:root {
+  /* ── Surfaces ── */
+  --bg-base:      #0a0c10;
+  --bg-surface:   #10131a;
+  --bg-elevated:  #161a23;
+  --bg-overlay:   rgba(8, 10, 14, 0.72);
+
+  /* ── Borders ── */
+  --hairline:        rgba(255, 255, 255, 0.06);
+  --hairline-strong: rgba(255, 255, 255, 0.10);
+  --hairline-focus:  rgba(255, 255, 255, 0.18);
+
+  /* ── Text ── */
+  --text-primary:   #e7eaf0;
+  --text-secondary: #9aa3b2;
+  --text-muted:     #5f6776;
+  --text-faint:     #3e4452;
+
+  /* ── Accent ── */
+  --accent:        #5EEAD4;
+  --accent-dim:    #2DD4BF;
+  --accent-glow:   rgba(94, 234, 212, 0.14);
+  --accent-faint:  rgba(94, 234, 212, 0.06);
+
+  /* ── Semantic Status ── */
+  --ok:       #4ADE80;
+  --ok-dim:   rgba(74, 222, 128, 0.12);
+  --warn:     #FBBF24;
+  --warn-dim: rgba(251, 191, 36, 0.12);
+  --crit:     #F87171;
+  --crit-dim: rgba(248, 113, 113, 0.14);
+  --crit-glow: rgba(248, 113, 113, 0.35);
+
+  /* ── Spacing (8pt base) ── */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+
+  /* ── Radius ── */
+  --r-1: 2px;
+  --r-2: 4px;
+  --r-3: 6px;
+
+  /* ── Fonts ── */
+  --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+
+  /* ── Layout ── */
+  --topbar-h: 36px;
+  --sidebar-w: 220px;
+}
+
+/* ── Resets ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv02";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+button { font-family: inherit; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+input { font-family: inherit; }
+
+/* ── Dot grid background ── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.025) 1px, transparent 0);
+  background-size: 24px 24px;
+  z-index: 0;
+}
+
+/* ── Utility classes ── */
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.eyebrow {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 500;
+}
+
+.h1 {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.h2 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* ── Animations ── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--hairline-focus); }
