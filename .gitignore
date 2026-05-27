@@ -28,6 +28,9 @@ frontend/dist/
 .DS_Store
 Thumbs.db
 
+# Design mockups (reference only)
+design/
+
 # Models
 backend/models/*.pt
 backend/models/*.onnx
