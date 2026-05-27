@@ -1,10 +1,13 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { apiBase } from "../hooks/useApi";
 import { useWebSocket } from "../hooks/useWebSocket";
 import CameraTabs from "../components/CameraTabs";
 import type { Camera } from "../components/CameraTabs";
 import StreamViewer from "../components/StreamViewer";
-import TrackPanel from "../components/TrackPanel";
+import PosePanel from "../components/PosePanel";
+import type { PoseEvent } from "../components/PosePanel";
+import { classifyPose } from "../utils/poseClassifier";
+import type { PoseClass } from "../utils/poseClassifier";
 import StreamControls from "../components/StreamControls";
 
 interface IpCam {
@@ -83,6 +86,21 @@ export default function MonitorPage() {
   const { connected, imgSrc, detections } = useWebSocket(wsPath);
 
   const activeCam = cams.find((c) => c.stream_key === activeKey);
+
+  const [events, setEvents] = useState<PoseEvent[]>([]);
+  const lastFallRef = useRef(0);
+  const eventIdRef = useRef(0);
+
+  useEffect(() => {
+    if (detections.length === 0) return;
+    const hasFall = detections.some((d) => d.keypoints && classifyPose(d.keypoints) === "lying");
+    if (hasFall && Date.now() - lastFallRef.current > 5000) {
+      lastFallRef.current = Date.now();
+      const id = ++eventIdRef.current;
+      setEvents((prev) => [{ id, type: "fall", timestamp: Date.now(), cameraName: activeCam?.name ?? "" }, ...prev].slice(0, 50));
+    }
+  }, [detections, activeCam]);
+
   const activeStats = activeKey ? camStats[activeKey] : undefined;
 
   const cameras: Camera[] = cams.map((cam) => ({
@@ -94,6 +112,12 @@ export default function MonitorPage() {
 
   const now = new Date();
   const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
+
+  const distribution: Record<PoseClass, number> = { standing: 0, sitting: 0, lying: 0, unknown: 0 };
+  for (const d of detections) {
+    const pose = d.keypoints ? classifyPose(d.keypoints) : "unknown";
+    distribution[pose]++;
+  }
 
   if (cams.length === 0) {
     return (
@@ -139,7 +163,7 @@ export default function MonitorPage() {
             inferenceFps={activeStats?.inference_fps ?? 0}
           />
         </div>
-        <TrackPanel detections={detections} />
+        <PosePanel distribution={distribution} total={detections.length} events={events} />
       </div>
     </>
   );
