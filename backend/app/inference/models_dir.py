@@ -20,6 +20,9 @@ PRESET_MODELS: tuple[str, ...] = (
     "yolo26m.pt",
     "yolo26l.pt",
     "yolo26x.pt",
+    "yolov8n-pose.pt",
+    "yolov8s-pose.pt",
+    "yolov8m-pose.pt",
 )
 
 
