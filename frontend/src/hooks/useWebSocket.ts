@@ -7,6 +7,7 @@ export interface Detection {
   conf: number;
   xyxy: [number, number, number, number];
   model: string;
+  keypoints?: [number, number, number][];
 }
 
 interface WsState {

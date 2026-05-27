@@ -279,19 +279,22 @@ def detections_to_json(result: InferenceResult) -> str:
 
     좌표 xyxy 는 raw frame 픽셀 기준 (frontend 가 displayed canvas 로 스케일링).
     """
+    items = []
+    for d in result.detections:
+        item: dict = {
+            "class_id": d.class_id,
+            "name": d.class_name,
+            "conf": d.confidence,
+            "xyxy": list(d.xyxy),
+            "model": d.model,
+        }
+        if d.keypoints:
+            item["keypoints"] = [[x, y, c] for x, y, c in d.keypoints]
+        items.append(item)
     return json.dumps({
         "type": "detections",
         "timestamp": result.timestamp,
-        "items": [
-            {
-                "class_id": d.class_id,
-                "name": d.class_name,
-                "conf": d.confidence,
-                "xyxy": list(d.xyxy),
-                "model": d.model,
-            }
-            for d in result.detections
-        ],
+        "items": items,
     }, ensure_ascii=False)
 
 

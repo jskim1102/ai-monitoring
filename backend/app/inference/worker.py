@@ -43,6 +43,8 @@ class Detection:
     xyxy: tuple[int, int, int, int]  # (x1, y1, x2, y2) 픽셀 좌표
     # 어떤 모델이 이 detection 을 만들었는지. 다중 모델 추론 시 라벨 prefix 결정에 사용.
     model: str = ""
+    # pose keypoints — list of (x, y, conf) tuples. 빈 리스트이면 detection 전용 모델.
+    keypoints: list[tuple[float, float, float]] = field(default_factory=list)
 
 
 @dataclass
@@ -344,9 +346,19 @@ def _parse_results(result, names: dict, model_name: str = "") -> list[Detection]
     xyxy_arr = boxes.xyxy.cpu().numpy().astype(int)
     conf_arr = boxes.conf.cpu().numpy()
     cls_arr = boxes.cls.cpu().numpy().astype(int)
+
+    has_kpts = result.keypoints is not None and len(result.keypoints) > 0
+    if has_kpts:
+        kpts_xy = result.keypoints.xy.cpu().numpy()
+        kpts_conf = result.keypoints.conf.cpu().numpy()
+
     for i in range(len(boxes)):
         x1, y1, x2, y2 = xyxy_arr[i].tolist()
         cls_id = int(cls_arr[i])
+        kpts: list[tuple[float, float, float]] = []
+        if has_kpts:
+            for j in range(kpts_xy.shape[1]):
+                kpts.append((float(kpts_xy[i, j, 0]), float(kpts_xy[i, j, 1]), float(kpts_conf[i, j])))
         detections.append(
             Detection(
                 class_id=cls_id,
@@ -354,6 +366,7 @@ def _parse_results(result, names: dict, model_name: str = "") -> list[Detection]
                 confidence=float(conf_arr[i]),
                 xyxy=(x1, y1, x2, y2),
                 model=model_name,
+                keypoints=kpts,
             )
         )
     return detections

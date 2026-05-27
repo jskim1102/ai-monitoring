@@ -17,6 +17,7 @@ export interface Detection {
   conf: number;
   xyxy: [number, number, number, number];
   model: string;
+  keypoints?: [number, number, number][];
 }
 
 interface Props {
@@ -28,6 +29,20 @@ interface Props {
   settings?: Record<string, ModelSettings>;
   imgStyle?: React.CSSProperties;
 }
+
+const COCO_SKELETON: [number, number][] = [
+  [0, 1], [0, 2], [1, 3], [2, 4],
+  [5, 6], [5, 7], [7, 9], [6, 8], [8, 10],
+  [5, 11], [6, 12], [11, 12],
+  [11, 13], [13, 15], [12, 14], [14, 16],
+];
+
+const KPT_COLORS = [
+  "#ff0000", "#ff5500", "#ffaa00", "#ffff00", "#aaff00",
+  "#55ff00", "#00ff00", "#00ff55", "#00ffaa", "#00ffff",
+  "#00aaff", "#0055ff", "#0000ff", "#5500ff", "#aa00ff",
+  "#ff00ff", "#ff00aa",
+];
 
 function BboxOverlay({ imgSrc, alt, detections, settings, imgStyle }: Props) {
   const imgRef = useRef<HTMLImageElement>(null);
@@ -116,6 +131,33 @@ function BboxOverlay({ imgSrc, alt, detections, settings, imgStyle }: Props) {
       // 라벨 글자 (흰색)
       ctx.fillStyle = "#ffffff";
       ctx.fillText(label, x1 + padX, labelY + padY);
+
+      // skeleton overlay
+      const kpts = det.keypoints;
+      if (kpts && kpts.length >= 17) {
+        const kptR = Math.max(2, 3 * scale);
+        // limb lines
+        ctx.lineWidth = Math.max(1, 1.5 * scale);
+        for (const [a, b] of COCO_SKELETON) {
+          const [ax, ay, ac] = kpts[a];
+          const [bx, by, bc] = kpts[b];
+          if (ac < 0.3 || bc < 0.3) continue;
+          ctx.strokeStyle = KPT_COLORS[a] ?? "#00ffff";
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(bx, by);
+          ctx.stroke();
+        }
+        // keypoint dots
+        for (let k = 0; k < kpts.length; k++) {
+          const [kx, ky, kc] = kpts[k];
+          if (kc < 0.3) continue;
+          ctx.fillStyle = KPT_COLORS[k] ?? "#00ffff";
+          ctx.beginPath();
+          ctx.arc(kx, ky, kptR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
     }
   }, [detections, size, settings]);
 
